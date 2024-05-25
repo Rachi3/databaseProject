@@ -38,5 +38,8 @@ public class MainInterface extends JFrame {
 
     public static void main(String[] args) {
         new MainInterface(); // MainInterface 객체 생성
+    	//dbQuery q=new dbQuery();
+    	
+    	//System.out.println(q.createBookInfoTable);
     }
 }

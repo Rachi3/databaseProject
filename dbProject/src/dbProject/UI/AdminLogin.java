@@ -1,5 +1,6 @@
 package dbProject.UI;
 
+import dbProject.UI.*;
 import java.sql.*;
 import javax.swing.*;
 import java.awt.*;
@@ -9,11 +10,11 @@ import java.awt.event.ActionListener;
 public class AdminLogin extends JFrame {
 	private static final String URL = "jdbc:mysql://localhost:3306/db1";
 	
+	dbQuery query=new dbQuery();
 	//관리자 ID/PW
 	private static final String adminUser="root";
 	private static final String adminPassword="1234";
-	Connection conn=null;
-	Statement stmt = null;
+
 	static private String ID="root";
 	static private String PW="1234";
 	
@@ -51,15 +52,7 @@ public class AdminLogin extends JFrame {
         	if(ID.equals(enteredID)&&PW.equals(enteredPW)) {
         		JOptionPane.showMessageDialog(null,"로그인 성공");
         		
-        		try {   conn = DriverManager.getConnection(URL,adminUser,adminPassword);//root 계정으로 접속
-        				stmt = conn.createStatement();
-        				openControllWindow();//관리자 매소드 실행
-        			    
-        			}catch(SQLException e1) {
-        				JOptionPane.showMessageDialog(null,"DB 연결 실패");
-        				throw new RuntimeException("DB connection failed",e1);
-        			}
-        		
+        		openControllWindow();//관리자 매소드 실행           		
         	}
         	else {
         		JOptionPane.showMessageDialog(null,"로그인 실패");
@@ -89,8 +82,67 @@ public class AdminLogin extends JFrame {
     	optionFrame.add(viewTableButton);
     	
     	optionFrame.setVisible(true);
-    	initDbButton.addActionListener(e->{
+    	initDbButton.addActionListener(e->resetDB());
+    	insertDbButton.addActionListener(e->insertDB());
+    	viewTableButton.addActionListener(e->showAllTable());
+    }
+    
+    private void resetDB() {
+    	try(Connection conn=DriverManager.getConnection(URL,adminUser,adminPassword);
+    		Statement stmt=conn.createStatement()){
+    		    		
+    		for(String commands:query.dropTables) {
+    			stmt.executeUpdate(commands);
+    		}
+               
+    		//table 생성
+    		stmt.executeUpdate(query.createMoviesTable);
+    		stmt.executeUpdate(query.createScreenTable);
+    		stmt.executeUpdate(query.createScreeningInfoTable);
+    		stmt.executeUpdate(query.createSeatsTable);
+    		stmt.executeUpdate(query.createCustomersInfoTable);
+    		stmt.executeUpdate(query.createBookInfoTable);
+    		stmt.executeUpdate(query.createTicketsTable);
     		
-    	});
+            //샘플 데이터 삽입
+    		stmt.executeUpdate(query.insertMovies);
+    		
+          
+            stmt.close();
+            conn.close();
+    		JOptionPane.showMessageDialog(null, "DB 초기화 성공");
+    		
+    	}catch(SQLException e) {
+    		JOptionPane.showMessageDialog(null, "DB 초기화 실패");
+    		e.printStackTrace();
+    	}
+    	
+    }
+    
+    private void insertDB() {
+    	//원하는 조건식 입력받기
+    	
+    	//삽입 쿼리 실행
+    }
+    
+    private void showAllTable() {
+    	//전체 테이블을 조회하는 기능
+    	
+    	try(Connection conn=DriverManager.getConnection(URL,adminUser,adminPassword);
+    			Statement stmt=conn.createStatement()){
+    				
+    			for(String tableName:query.tableNames) {
+    				String tmpQuery="Select * From "+tableName+";";
+    				
+    				System.out.println(tmpQuery);
+    				//db에서 데이터 읽어온후 테이블별 출력
+    				//ResultSet rs = stmt.executeQuery(tmpQuery);
+    				//ResultSetMetaData metaData = rs.getMetaData();
+    				
+    				JOptionPane.showMessageDialog(null, tmpQuery);
+    			}
+    			}catch(SQLException e) {
+    				e.printStackTrace();
+    			}
     }
 }
