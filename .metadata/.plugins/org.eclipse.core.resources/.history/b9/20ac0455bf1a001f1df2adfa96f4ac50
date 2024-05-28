@@ -1,0 +1,84 @@
+
+public class dbQuery {
+	String dropTables = "DROP TABLE IF EXISTS Tickets;" +
+            "DROP TABLE IF EXISTS Seats;" +
+            "DROP TABLE IF EXISTS ScreeningInfo;" +
+            "DROP TABLE IF EXISTS BookInfo;" +
+            "DROP TABLE IF EXISTS CustomersInfo;" +
+            "DROP TABLE IF EXISTS Movies;" +
+            "DROP TABLE IF EXISTS Screen;";
+
+    String createMoviesTable = "CREATE TABLE Movies (" +
+                  "MovieID INT AUTO_INCREMENT PRIMARY KEY," +
+                  "MovieTitle VARCHAR(31) NOT NULL," +
+                  "RunningTime INT NOT NULL," +
+                  "FilmRating ENUM('G','PG','PG-13','PG-15','R') NOT NULL," +
+                  "Director VARCHAR(30) NOT NULL," +
+                  "Actors TEXT NOT NULL," +
+                  "Genre VARCHAR(20) NOT NULL," +
+                  "MovieDescription TEXT NOT NULL," +
+                  "ReleaseDate DATE NOT NULL," +
+                  "MovieRating DECIMAL(4,2) NOT NULL" +
+                  ");";
+
+    String createScreenTable = "CREATE TABLE Screen(" +
+                  "ScreenID INT AUTO_INCREMENT PRIMARY KEY," +
+                  "IsActive BOOLEAN NOT NULL DEFAULT true," +
+                  "TotalSeats INT NOT NULL," +
+                  "ScreenRows INT NOT NULL," +
+                  "ScreenColumns INT NOT NULL" +
+                  ");";
+
+    String createScreeningInfoTable = "CREATE TABLE ScreeningInfo (" +
+                         "ScreeningID INT AUTO_INCREMENT PRIMARY KEY," +
+                         "MovieID INT," +
+                         "ScreenID INT," +
+                         "ShowDate DATE NOT NULL," +
+                         "ScreeningDay VARCHAR(9)," +
+                         "NumberOfScreening INT NOT NULL," +
+                         "StartTime TIME NOT NULL," +
+                         "EndTime TIME NOT NULL," +
+                         "FOREIGN KEY (MovieID) REFERENCES Movies(MovieID)," +
+                         "FOREIGN KEY (ScreenID) REFERENCES Screen(ScreenID)" +
+                         ");";
+
+    String createSeatsTable = "CREATE TABLE Seats(" +
+                 "SeatID INT AUTO_INCREMENT PRIMARY KEY," +
+                 "ScreenID INT NOT NULL," +
+                 "SeatRow INT NOT NULL," +
+                 "SeatColumn INT NOT NULL," +
+                 "FOREIGN KEY (ScreenID) REFERENCES Screen(ScreenID)" +
+                 ");";
+
+    String createCustomersInfoTable = "CREATE TABLE CustomersInfo(" +
+                         "CustomerID VARCHAR(256) PRIMARY KEY NOT NULL," +
+                         "CustomerName VARCHAR(50)," +
+                         "PhoneNum CHAR(11)," +
+                         "Email VARCHAR(50)" +
+                         ");";
+
+    String createBookInfoTable = "CREATE TABLE BookInfo(" +
+                    "BookingNum INT AUTO_INCREMENT PRIMARY KEY NOT NULL," +
+                    "PaymentMethod ENUM('현금','카드') NOT NULL," +
+                    "PaymentStatus ENUM('Pending', 'Completed') NOT NULL," +
+                    "CustomerID VARCHAR(256) NOT NULL," +
+                    "PaymentDate DATE NOT NULL," +
+                    "FOREIGN KEY (CustomerID) REFERENCES CustomersInfo(CustomerID)" +
+                    ");";
+
+    String createTicketsTable = "CREATE TABLE Tickets(" +
+                   "TicketID INT AUTO_INCREMENT PRIMARY KEY," +
+                   "ScreeningID INT NOT NULL," +
+                   "ScreenID INT NOT NULL," +
+                   "SeatID INT NOT NULL," +
+                   "BookingNum INT NOT NULL," +
+                   "TicketInsurance BOOLEAN NOT NULL DEFAULT FALSE," +
+                   "StandardPrice INT NOT NULL," +
+                   "SellingPrice INT NOT NULL," +
+                   "FOREIGN KEY (BookingNum) REFERENCES BookInfo(BookingNum)," +
+                   "FOREIGN KEY (ScreenID) REFERENCES Screen(ScreenID)," +
+                   "FOREIGN KEY (ScreeningID) REFERENCES ScreeningInfo(ScreeningID)," +
+                   "FOREIGN KEY (SeatID) REFERENCES Seats(SeatID)" +
+                   ");";
+
+}
