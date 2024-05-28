@@ -6,7 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MainInterface extends JFrame {
-	
+	private static boolean loggedIn = false;
     public MainInterface() {
    
         setSize(300,200);
@@ -28,7 +28,8 @@ public class MainInterface extends JFrame {
         	@Override
         	
         	public void actionPerformed(ActionEvent e) {
-        		new AdminLogin().setVisible(true);
+        		new AdminLogin().setVisible(!loggedIn);//한번 로그인했을경우 다시 로그인하지 않고 진행하게끔
+        		loggedIn=true;
         	}
         });//관리자 버튼 클릭시 로그인 창 띄우기
       
@@ -41,5 +42,8 @@ public class MainInterface extends JFrame {
     	//dbQuery q=new dbQuery();
     	
     	//System.out.println(q.createBookInfoTable);
+    }
+    static boolean isLoggedIn() {
+    	return loggedIn;
     }
 }
