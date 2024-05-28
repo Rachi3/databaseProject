@@ -141,10 +141,17 @@ public class AdminLogin extends JFrame {
                             Vector<String> columnNames = new Vector<>();
 
                             // 테이블의 컬럼 이름 가져오기
+<<<<<<< HEAD
                             ResultSetMetaData rsMetaData = rs.getMetaData();
                             int columnCount = rsMetaData.getColumnCount();
                             for (int i = 1; i <= columnCount; i++) {
                                 columnNames.add(rsMetaData.getColumnName(i));
+=======
+                            ResultSetMetaData metaData = rs.getMetaData();
+                            int columnCount = metaData.getColumnCount();
+                            for (int i = 1; i <= columnCount; i++) {
+                                columnNames.add(metaData.getColumnName(i));
+>>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
                             }
 
                             // 테이블의 데이터를 Vector에 저장
@@ -179,17 +186,25 @@ public class AdminLogin extends JFrame {
                                     // 선택된 행의 데이터를 입력창에 미리 채우기
                                     JPanel inputPanel = new JPanel(new GridLayout(0, 1));
                                     Vector<Object> rowData = data.get(selectedRow);
+<<<<<<< HEAD
                                     JTextField[] textFields = new JTextField[columnCount];
                                     for (int i = 0; i < columnCount; i++) {
                                         textFields[i] = new JTextField(String.valueOf(rowData.get(i)));
                                         inputPanel.add(new JLabel(columnNames.get(i) + ":"));
                                         inputPanel.add(textFields[i]);
+=======
+                                    for (int i = 0; i < columnCount; i++) {
+                                        JTextField textField = new JTextField(String.valueOf(rowData.get(i)));
+                                        inputPanel.add(new JLabel(columnNames.get(i) + ":"));
+                                        inputPanel.add(textField);
+>>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
                                     }
 
                                     // 입력창을 팝업으로 표시
                                     int result = JOptionPane.showConfirmDialog(null, inputPanel, "행 수정", JOptionPane.OK_CANCEL_OPTION);
                                     if (result == JOptionPane.OK_OPTION) {
                                         // 수정된 데이터 가져오기
+<<<<<<< HEAD
                                         try {
                                             StringBuilder updateQuery = new StringBuilder("UPDATE ");
                                             updateQuery.append(tableName).append(" SET ");
@@ -229,6 +244,36 @@ public class AdminLogin extends JFrame {
 
                                             // 쿼리 실행
                                             PreparedStatement pstmt = conn.prepareStatement(updateQuery.toString());
+=======
+                                        Vector<Object> updatedRowData = new Vector<>();
+                                        for (Component component : inputPanel.getComponents()) {
+                                            if (component instanceof JTextField) {
+                                                JTextField textField = (JTextField) component;
+                                                updatedRowData.add(textField.getText());
+                                            }
+                                        }
+
+                                        // 수정된 데이터로 UPDATE 쿼리 실행
+                                        try {
+                                            StringBuilder updateQuery = new StringBuilder("UPDATE ");
+                                            updateQuery.append(tableName).append(" SET ");
+                                            for (int i = 0; i < columnCount; i++) {
+                                                updateQuery.append(columnNames.get(i)).append(" = ?");
+                                                if (i != columnCount - 1) {
+                                                    updateQuery.append(", ");
+                                                }
+                                            }
+                                            updateQuery.append(" WHERE ");
+                                            String primaryKeyColumnName = metaData.getColumnName(1); // 첫 번째 컬럼을 primary key로 가정
+                                            updateQuery.append(primaryKeyColumnName).append(" = ?");
+
+                                            PreparedStatement pstmt = conn.prepareStatement(updateQuery.toString());
+                                            for (int i = 0; i < columnCount; i++) {
+                                                pstmt.setObject(i + 1, updatedRowData.get(i));
+                                            }
+                                            pstmt.setObject(columnCount + 1, rowData.get(0)); // primary key 값 설정
+
+>>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
                                             pstmt.executeUpdate();
                                             JOptionPane.showMessageDialog(null, "행이 성공적으로 수정되었습니다.");
                                             tableFrame.dispose(); // 창 닫기
@@ -259,7 +304,10 @@ public class AdminLogin extends JFrame {
         }
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
     
 	private void resetDB() {
     	try(Connection conn=DriverManager.getConnection(URL,adminUser,adminPassword);
@@ -436,7 +484,10 @@ public class AdminLogin extends JFrame {
                                             if (!isFirstColumn) {
                                                 queryBuilder.append(", "); // 첫 번째 열이 아닌 경우 쉼표 추가
                                             }
+<<<<<<< HEAD
                                             
+=======
+>>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
                                             String columnName = tableColumns.getString("COLUMN_NAME");
                                             queryBuilder.append(columnName);
                                             isFirstColumn = false; // 첫 번째 열 여부 갱신
@@ -446,6 +497,7 @@ public class AdminLogin extends JFrame {
 
                                     // 입력된 값들을 쿼리에 추가
                                     String[] attributes1 = inputText.split("/");
+<<<<<<< HEAD
                                     tableColumns.beforeFirst(); // ResultSet을 다시 처음부터 순회하기 위해 초기화
                                     int i = 0;
                                     while (tableColumns.next()) {
@@ -477,6 +529,14 @@ public class AdminLogin extends JFrame {
                                             
                                             i++;
                                         }
+=======
+                                    for (int i = 0; i < attributes1.length; i++) {
+                                        // 입력된 값을 쿼리에 직접 추가
+                                        if (i > 0) {
+                                            queryBuilder.append(", "); // 첫 번째 값 이후에는 쉼표 추가
+                                        }
+                                        queryBuilder.append("'").append(attributes1[i]).append("'");
+>>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
                                     }
                                     queryBuilder.append(")");
 
@@ -495,10 +555,17 @@ public class AdminLogin extends JFrame {
                                     ex.printStackTrace();
                                     JOptionPane.showMessageDialog(null, "테이블의 열 정보를 가져오는데 실패했습니다.");
                                 }
+<<<<<<< HEAD
                             }
                         });
 
 
+=======
+
+                            }
+                        });
+
+>>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
                         // 취소 버튼의 액션 리스너 등록
                         cancelButton.addActionListener(new ActionListener() {
                         	@Override
