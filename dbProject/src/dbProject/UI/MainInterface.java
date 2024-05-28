@@ -7,6 +7,8 @@ import java.awt.event.ActionListener;
 
 public class MainInterface extends JFrame {
 	private static boolean loggedIn = false;
+	private static boolean userLoggedIn = false;
+	
     public MainInterface() {
    
         setSize(300,200);
@@ -32,7 +34,15 @@ public class MainInterface extends JFrame {
         		loggedIn=true;
         	}
         });//관리자 버튼 클릭시 로그인 창 띄우기
-      
+      /*
+        customerButton.addActionListener(new ActionListener() {
+        	@Override
+        	
+        	public void actionPerformed(ActionEvent e) {
+        		new UserLogin().setVisible(!userLoggedIn);
+        		userLoggedIn=true;
+        	}
+        });*/
         // 창을 보이게 함
         setVisible(true);
     }
@@ -45,5 +55,9 @@ public class MainInterface extends JFrame {
     }
     static boolean isLoggedIn() {
     	return loggedIn;
+    }
+    
+    static boolean isUserLoggedIn() {
+    	return userLoggedIn;
     }
 }

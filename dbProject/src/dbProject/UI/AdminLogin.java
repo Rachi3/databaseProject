@@ -141,10 +141,10 @@ public class AdminLogin extends JFrame {
                             Vector<String> columnNames = new Vector<>();
 
                             // 테이블의 컬럼 이름 가져오기
-                            ResultSetMetaData metaData = rs.getMetaData();
-                            int columnCount = metaData.getColumnCount();
+                            ResultSetMetaData rsMetaData = rs.getMetaData();
+                            int columnCount = rsMetaData.getColumnCount();
                             for (int i = 1; i <= columnCount; i++) {
-                                columnNames.add(metaData.getColumnName(i));
+                                columnNames.add(rsMetaData.getColumnName(i));
                             }
 
                             // 테이블의 데이터를 Vector에 저장
@@ -179,44 +179,56 @@ public class AdminLogin extends JFrame {
                                     // 선택된 행의 데이터를 입력창에 미리 채우기
                                     JPanel inputPanel = new JPanel(new GridLayout(0, 1));
                                     Vector<Object> rowData = data.get(selectedRow);
+                                    JTextField[] textFields = new JTextField[columnCount];
                                     for (int i = 0; i < columnCount; i++) {
-                                        JTextField textField = new JTextField(String.valueOf(rowData.get(i)));
+                                        textFields[i] = new JTextField(String.valueOf(rowData.get(i)));
                                         inputPanel.add(new JLabel(columnNames.get(i) + ":"));
-                                        inputPanel.add(textField);
+                                        inputPanel.add(textFields[i]);
                                     }
 
                                     // 입력창을 팝업으로 표시
                                     int result = JOptionPane.showConfirmDialog(null, inputPanel, "행 수정", JOptionPane.OK_CANCEL_OPTION);
                                     if (result == JOptionPane.OK_OPTION) {
                                         // 수정된 데이터 가져오기
-                                        Vector<Object> updatedRowData = new Vector<>();
-                                        for (Component component : inputPanel.getComponents()) {
-                                            if (component instanceof JTextField) {
-                                                JTextField textField = (JTextField) component;
-                                                updatedRowData.add(textField.getText());
-                                            }
-                                        }
-
-                                        // 수정된 데이터로 UPDATE 쿼리 실행
                                         try {
                                             StringBuilder updateQuery = new StringBuilder("UPDATE ");
                                             updateQuery.append(tableName).append(" SET ");
+
+                                            boolean isFirstColumn = true;
                                             for (int i = 0; i < columnCount; i++) {
-                                                updateQuery.append(columnNames.get(i)).append(" = ?");
-                                                if (i != columnCount - 1) {
+                                                if (!isFirstColumn) {
                                                     updateQuery.append(", ");
                                                 }
-                                            }
-                                            updateQuery.append(" WHERE ");
-                                            String primaryKeyColumnName = metaData.getColumnName(1); // 첫 번째 컬럼을 primary key로 가정
-                                            updateQuery.append(primaryKeyColumnName).append(" = ?");
 
+                                                // 컬럼의 데이터 타입을 가져와서 Boolean인지 아닌지 확인
+                                                int dataType = rsMetaData.getColumnType(i + 1);
+                                                boolean isBoolean = (dataType == Types.BOOLEAN || dataType == Types.BIT);
+
+                                                updateQuery.append(columnNames.get(i)).append(" = ");
+                                                if (isBoolean) {
+                                                    String inputValue = textFields[i].getText().trim().toLowerCase();
+                                                    if (inputValue.equals("true") || inputValue.equals("1")) {
+                                                        updateQuery.append("1");
+                                                    } else if (inputValue.equals("false") || inputValue.equals("0")) {
+                                                        updateQuery.append("0");
+                                                    } else {
+                                                        JOptionPane.showMessageDialog(null, "잘못된 Boolean 값입니다: " + textFields[i].getText());
+                                                        return;
+                                                    }
+                                                } else {
+                                                    updateQuery.append("'").append(textFields[i].getText()).append("'");
+                                                }
+                                                isFirstColumn = false;
+                                            }
+
+                                            // WHERE 절 추가 (수정할 조건)
+                                            updateQuery.append(" WHERE ").append(columnNames.get(0)).append(" = '").append(rowData.get(0)).append("'");
+
+                                            // 완성된 쿼리문 출력 (테스트용)
+                                            // System.out.println("UPDATE Query: " + updateQuery.toString());
+
+                                            // 쿼리 실행
                                             PreparedStatement pstmt = conn.prepareStatement(updateQuery.toString());
-                                            for (int i = 0; i < columnCount; i++) {
-                                                pstmt.setObject(i + 1, updatedRowData.get(i));
-                                            }
-                                            pstmt.setObject(columnCount + 1, rowData.get(0)); // primary key 값 설정
-
                                             pstmt.executeUpdate();
                                             JOptionPane.showMessageDialog(null, "행이 성공적으로 수정되었습니다.");
                                             tableFrame.dispose(); // 창 닫기
@@ -246,6 +258,7 @@ public class AdminLogin extends JFrame {
             JOptionPane.showMessageDialog(null, "테이블 데이터를 가져오는 중 오류가 발생했습니다.");
         }
     }
+
 
     
 	private void resetDB() {
@@ -423,6 +436,7 @@ public class AdminLogin extends JFrame {
                                             if (!isFirstColumn) {
                                                 queryBuilder.append(", "); // 첫 번째 열이 아닌 경우 쉼표 추가
                                             }
+                                            
                                             String columnName = tableColumns.getString("COLUMN_NAME");
                                             queryBuilder.append(columnName);
                                             isFirstColumn = false; // 첫 번째 열 여부 갱신
@@ -432,12 +446,37 @@ public class AdminLogin extends JFrame {
 
                                     // 입력된 값들을 쿼리에 추가
                                     String[] attributes1 = inputText.split("/");
-                                    for (int i = 0; i < attributes1.length; i++) {
-                                        // 입력된 값을 쿼리에 직접 추가
-                                        if (i > 0) {
-                                            queryBuilder.append(", "); // 첫 번째 값 이후에는 쉼표 추가
+                                    tableColumns.beforeFirst(); // ResultSet을 다시 처음부터 순회하기 위해 초기화
+                                    int i = 0;
+                                    while (tableColumns.next()) {
+                                        String isAutoIncrement = tableColumns.getString("IS_AUTOINCREMENT");
+                                        if (!"YES".equals(isAutoIncrement)) { // Auto Increment가 아닌 경우에만 처리
+                                            if (i > 0) {
+                                                queryBuilder.append(", "); // 첫 번째 값 이후에는 쉼표 추가
+                                            }
+                                            
+                                            // 컬럼의 데이터 타입을 가져와서 Boolean인지 아닌지 확인
+                                            int dataType = tableColumns.getInt("DATA_TYPE");
+                                            boolean isBoolean = (dataType == Types.BOOLEAN || dataType == Types.BIT);
+                                            
+                                            // Boolean 타입인 경우 처리
+                                            if (isBoolean) {
+                                                String inputValue = attributes1[i].trim().toLowerCase();
+                                                if (inputValue.equals("true") || inputValue.equals("1")) {
+                                                    queryBuilder.append("1");
+                                                } else if (inputValue.equals("false") || inputValue.equals("0")) {
+                                                    queryBuilder.append("0");
+                                                } else {
+                                                    JOptionPane.showMessageDialog(null, "잘못된 Boolean 값입니다: " + attributes1[i]);
+                                                    return;
+                                                }
+                                            } else {
+                                                // Boolean이 아닌 경우의 처리
+                                                queryBuilder.append("'").append(attributes1[i]).append("'");
+                                            }
+                                            
+                                            i++;
                                         }
-                                        queryBuilder.append("'").append(attributes1[i]).append("'");
                                     }
                                     queryBuilder.append(")");
 
@@ -456,9 +495,9 @@ public class AdminLogin extends JFrame {
                                     ex.printStackTrace();
                                     JOptionPane.showMessageDialog(null, "테이블의 열 정보를 가져오는데 실패했습니다.");
                                 }
-
                             }
                         });
+
 
                         // 취소 버튼의 액션 리스너 등록
                         cancelButton.addActionListener(new ActionListener() {
