@@ -34,7 +34,7 @@ public class MainInterface extends JFrame {
         		loggedIn=true;
         	}
         });//관리자 버튼 클릭시 로그인 창 띄우기
-      /*
+      
         customerButton.addActionListener(new ActionListener() {
         	@Override
         	
@@ -42,7 +42,7 @@ public class MainInterface extends JFrame {
         		new UserLogin().setVisible(!userLoggedIn);
         		userLoggedIn=true;
         	}
-        });*/
+        });
         // 창을 보이게 함
         setVisible(true);
     }
