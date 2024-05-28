@@ -142,6 +142,7 @@ public class AdminLogin extends JFrame {
 
                             // 테이블의 컬럼 이름 가져오기
 <<<<<<< HEAD
+<<<<<<< HEAD
                             ResultSetMetaData rsMetaData = rs.getMetaData();
                             int columnCount = rsMetaData.getColumnCount();
                             for (int i = 1; i <= columnCount; i++) {
@@ -152,6 +153,12 @@ public class AdminLogin extends JFrame {
                             for (int i = 1; i <= columnCount; i++) {
                                 columnNames.add(metaData.getColumnName(i));
 >>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
+=======
+                            ResultSetMetaData metaData = rs.getMetaData();
+                            int columnCount = metaData.getColumnCount();
+                            for (int i = 1; i <= columnCount; i++) {
+                                columnNames.add(metaData.getColumnName(i));
+>>>>>>> parent of 282284f (boolean값 입력시 발생하던 문제 해결)
                             }
 
                             // 테이블의 데이터를 Vector에 저장
@@ -187,10 +194,14 @@ public class AdminLogin extends JFrame {
                                     JPanel inputPanel = new JPanel(new GridLayout(0, 1));
                                     Vector<Object> rowData = data.get(selectedRow);
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     JTextField[] textFields = new JTextField[columnCount];
+=======
+>>>>>>> parent of 282284f (boolean값 입력시 발생하던 문제 해결)
                                     for (int i = 0; i < columnCount; i++) {
-                                        textFields[i] = new JTextField(String.valueOf(rowData.get(i)));
+                                        JTextField textField = new JTextField(String.valueOf(rowData.get(i)));
                                         inputPanel.add(new JLabel(columnNames.get(i) + ":"));
+<<<<<<< HEAD
                                         inputPanel.add(textFields[i]);
 =======
                                     for (int i = 0; i < columnCount; i++) {
@@ -198,6 +209,9 @@ public class AdminLogin extends JFrame {
                                         inputPanel.add(new JLabel(columnNames.get(i) + ":"));
                                         inputPanel.add(textField);
 >>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
+=======
+                                        inputPanel.add(textField);
+>>>>>>> parent of 282284f (boolean값 입력시 발생하던 문제 해결)
                                     }
 
                                     // 입력창을 팝업으로 표시
@@ -205,45 +219,33 @@ public class AdminLogin extends JFrame {
                                     if (result == JOptionPane.OK_OPTION) {
                                         // 수정된 데이터 가져오기
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+                                        Vector<Object> updatedRowData = new Vector<>();
+                                        for (Component component : inputPanel.getComponents()) {
+                                            if (component instanceof JTextField) {
+                                                JTextField textField = (JTextField) component;
+                                                updatedRowData.add(textField.getText());
+                                            }
+                                        }
+
+                                        // 수정된 데이터로 UPDATE 쿼리 실행
+>>>>>>> parent of 282284f (boolean값 입력시 발생하던 문제 해결)
                                         try {
                                             StringBuilder updateQuery = new StringBuilder("UPDATE ");
                                             updateQuery.append(tableName).append(" SET ");
-
-                                            boolean isFirstColumn = true;
                                             for (int i = 0; i < columnCount; i++) {
-                                                if (!isFirstColumn) {
+                                                updateQuery.append(columnNames.get(i)).append(" = ?");
+                                                if (i != columnCount - 1) {
                                                     updateQuery.append(", ");
                                                 }
-
-                                                // 컬럼의 데이터 타입을 가져와서 Boolean인지 아닌지 확인
-                                                int dataType = rsMetaData.getColumnType(i + 1);
-                                                boolean isBoolean = (dataType == Types.BOOLEAN || dataType == Types.BIT);
-
-                                                updateQuery.append(columnNames.get(i)).append(" = ");
-                                                if (isBoolean) {
-                                                    String inputValue = textFields[i].getText().trim().toLowerCase();
-                                                    if (inputValue.equals("true") || inputValue.equals("1")) {
-                                                        updateQuery.append("1");
-                                                    } else if (inputValue.equals("false") || inputValue.equals("0")) {
-                                                        updateQuery.append("0");
-                                                    } else {
-                                                        JOptionPane.showMessageDialog(null, "잘못된 Boolean 값입니다: " + textFields[i].getText());
-                                                        return;
-                                                    }
-                                                } else {
-                                                    updateQuery.append("'").append(textFields[i].getText()).append("'");
-                                                }
-                                                isFirstColumn = false;
                                             }
+                                            updateQuery.append(" WHERE ");
+                                            String primaryKeyColumnName = metaData.getColumnName(1); // 첫 번째 컬럼을 primary key로 가정
+                                            updateQuery.append(primaryKeyColumnName).append(" = ?");
 
-                                            // WHERE 절 추가 (수정할 조건)
-                                            updateQuery.append(" WHERE ").append(columnNames.get(0)).append(" = '").append(rowData.get(0)).append("'");
-
-                                            // 완성된 쿼리문 출력 (테스트용)
-                                            // System.out.println("UPDATE Query: " + updateQuery.toString());
-
-                                            // 쿼리 실행
                                             PreparedStatement pstmt = conn.prepareStatement(updateQuery.toString());
+<<<<<<< HEAD
 =======
                                         Vector<Object> updatedRowData = new Vector<>();
                                         for (Component component : inputPanel.getComponents()) {
@@ -268,12 +270,17 @@ public class AdminLogin extends JFrame {
                                             updateQuery.append(primaryKeyColumnName).append(" = ?");
 
                                             PreparedStatement pstmt = conn.prepareStatement(updateQuery.toString());
+=======
+>>>>>>> parent of 282284f (boolean값 입력시 발생하던 문제 해결)
                                             for (int i = 0; i < columnCount; i++) {
                                                 pstmt.setObject(i + 1, updatedRowData.get(i));
                                             }
                                             pstmt.setObject(columnCount + 1, rowData.get(0)); // primary key 값 설정
 
+<<<<<<< HEAD
 >>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
+=======
+>>>>>>> parent of 282284f (boolean값 입력시 발생하던 문제 해결)
                                             pstmt.executeUpdate();
                                             JOptionPane.showMessageDialog(null, "행이 성공적으로 수정되었습니다.");
                                             tableFrame.dispose(); // 창 닫기
@@ -305,9 +312,12 @@ public class AdminLogin extends JFrame {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
+=======
+>>>>>>> parent of 282284f (boolean값 입력시 발생하던 문제 해결)
     
 	private void resetDB() {
     	try(Connection conn=DriverManager.getConnection(URL,adminUser,adminPassword);
@@ -485,9 +495,12 @@ public class AdminLogin extends JFrame {
                                                 queryBuilder.append(", "); // 첫 번째 열이 아닌 경우 쉼표 추가
                                             }
 <<<<<<< HEAD
+<<<<<<< HEAD
                                             
 =======
 >>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
+=======
+>>>>>>> parent of 282284f (boolean값 입력시 발생하던 문제 해결)
                                             String columnName = tableColumns.getString("COLUMN_NAME");
                                             queryBuilder.append(columnName);
                                             isFirstColumn = false; // 첫 번째 열 여부 갱신
@@ -497,6 +510,7 @@ public class AdminLogin extends JFrame {
 
                                     // 입력된 값들을 쿼리에 추가
                                     String[] attributes1 = inputText.split("/");
+<<<<<<< HEAD
 <<<<<<< HEAD
                                     tableColumns.beforeFirst(); // ResultSet을 다시 처음부터 순회하기 위해 초기화
                                     int i = 0;
@@ -537,6 +551,14 @@ public class AdminLogin extends JFrame {
                                         }
                                         queryBuilder.append("'").append(attributes1[i]).append("'");
 >>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
+=======
+                                    for (int i = 0; i < attributes1.length; i++) {
+                                        // 입력된 값을 쿼리에 직접 추가
+                                        if (i > 0) {
+                                            queryBuilder.append(", "); // 첫 번째 값 이후에는 쉼표 추가
+                                        }
+                                        queryBuilder.append("'").append(attributes1[i]).append("'");
+>>>>>>> parent of 282284f (boolean값 입력시 발생하던 문제 해결)
                                     }
                                     queryBuilder.append(")");
 
@@ -556,6 +578,7 @@ public class AdminLogin extends JFrame {
                                     JOptionPane.showMessageDialog(null, "테이블의 열 정보를 가져오는데 실패했습니다.");
                                 }
 <<<<<<< HEAD
+<<<<<<< HEAD
                             }
                         });
 
@@ -566,6 +589,12 @@ public class AdminLogin extends JFrame {
                         });
 
 >>>>>>> ce094de3095a65c94656ecac3d4aeb13c2c3efcf
+=======
+
+                            }
+                        });
+
+>>>>>>> parent of 282284f (boolean값 입력시 발생하던 문제 해결)
                         // 취소 버튼의 액션 리스너 등록
                         cancelButton.addActionListener(new ActionListener() {
                         	@Override
