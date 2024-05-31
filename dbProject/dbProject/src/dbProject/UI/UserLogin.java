@@ -136,11 +136,14 @@ public class UserLogin extends JFrame {
                 if (selectedRow != -1) {
                     int ticketID = (int) userInfoTable.getValueAt(selectedRow, 0);
                     cancelBooking(ticketID);
+                    userInfoFrame.dispose();
                     ((DefaultTableModel) userInfoTable.getModel()).removeRow(selectedRow);
                 } else {
                     JOptionPane.showMessageDialog(null, "취소할 예매 정보를 선택해주세요.");
                 }
             }
+            
+            
         });
 
         // 조회 버튼 동작 구현
@@ -151,6 +154,8 @@ public class UserLogin extends JFrame {
                 if (selectedRow != -1) {
                     String movieTitle = (String) userInfoTable.getValueAt(selectedRow, 1);
                     showAllScreenings(movieTitle);
+                    userInfoFrame.dispose();
+                    
                 } else {
                     JOptionPane.showMessageDialog(null, "조회할 예매 정보를 선택해주세요.");
                 }
@@ -165,6 +170,8 @@ public class UserLogin extends JFrame {
                 if (selectedRow != -1) {
                     int ticketID = (int) userInfoTable.getValueAt(selectedRow, 0);
                     changeBooking(ticketID);
+                    userInfoFrame.dispose();
+                    
                 } else {
                     JOptionPane.showMessageDialog(null, "변경할 예매 정보를 선택해주세요.");
                 }
@@ -178,14 +185,63 @@ public class UserLogin extends JFrame {
                 int selectedRow = userInfoTable.getSelectedRow();
                 if (selectedRow != -1) {
                     int ticketID = (int) userInfoTable.getValueAt(selectedRow, 0);
-                    changeScreeningSchedule(ticketID);
+                    String movieTitle = (String) userInfoTable.getValueAt(selectedRow, 1); // 영화 제목을 가져옴
+                    changeScreeningSchedule(ticketID, movieTitle); // 영화 제목을 메소드에 전달
+                    userInfoFrame.dispose();
+                    
                 } else {
                     JOptionPane.showMessageDialog(null, "변경할 예매 정보를 선택해주세요.");
                 }
             }
         });
 
+        
         userInfoFrame.setVisible(true);
+    }
+    private static void changeScreeningSchedule(int ticketID, String movieTitle) {
+        JFrame changeScheduleFrame = new JFrame("상영 일정 변경");
+        changeScheduleFrame.setSize(800, 600);
+        changeScheduleFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        changeScheduleFrame.setLayout(new BorderLayout());
+
+        JTable scheduleTable = new JTable();
+        JScrollPane scrollPane = new JScrollPane(scheduleTable);
+        changeScheduleFrame.add(scrollPane, BorderLayout.CENTER);
+
+        // 선택된 영화의 모든 상영 일정을 표시
+        try (Connection conn = DriverManager.getConnection(URL, userID, userPW)) {
+            String query = "SELECT s.ScreeningID, s.ShowDate, s.StartTime, sc.ScreenID, sc.ScreenRows, sc.ScreenColumns " +
+                           "FROM ScreeningInfo s " +
+                           "JOIN Movies m ON s.MovieID = m.MovieID " +
+                           "JOIN Screen sc ON s.ScreenID = sc.ScreenID " +
+                           "WHERE m.MovieTitle = ?";
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, movieTitle);
+            ResultSet resultSet = statement.executeQuery();
+
+            scheduleTable.setModel(buildTableModel(resultSet));
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "상영 일정 조회 중 오류가 발생했습니다.");
+        }
+
+        JPanel buttonPanel = new JPanel();
+        JButton selectButton = new JButton("선택");
+        buttonPanel.add(selectButton);
+        changeScheduleFrame.add(buttonPanel, BorderLayout.SOUTH);
+
+        selectButton.addActionListener(e -> {
+            int selectedRow = scheduleTable.getSelectedRow();
+            if (selectedRow != -1) {
+                int newScreeningID = (int) scheduleTable.getValueAt(selectedRow, 0);
+                int screenID = (int) scheduleTable.getValueAt(selectedRow, 3);
+                showSeatSelectionForChange(ticketID, newScreeningID, screenID, changeScheduleFrame);
+            } else {
+                JOptionPane.showMessageDialog(null, "변경할 상영 일정을 선택해주세요.");
+            }
+        });
+
+        changeScheduleFrame.setVisible(true);
     }
 
 
@@ -576,70 +632,7 @@ public class UserLogin extends JFrame {
         }
     }
 
-    private static void changeScreeningSchedule(int ticketID) {
-        JFrame changeScheduleFrame = new JFrame("상영 일정 변경");
-        changeScheduleFrame.setSize(600, 400);
-        changeScheduleFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        changeScheduleFrame.setLayout(new BorderLayout());
-
-        JTable scheduleTable = new JTable();
-        JScrollPane scrollPane = new JScrollPane(scheduleTable);
-        changeScheduleFrame.add(scrollPane, BorderLayout.CENTER);
-
-        // 현재 예매된 영화의 상영 일정을 표시
-        try (Connection conn = DriverManager.getConnection(URL, userID, userPW)) {
-            String query = "SELECT s.ScreeningID, m.MovieTitle, s.ShowDate, s.StartTime, sc.ScreenID, sc.ScreenRows, sc.ScreenColumns " +
-                           "FROM ScreeningInfo s " +
-                           "JOIN Movies m ON s.MovieID = m.MovieID " +
-                           "JOIN Screen sc ON s.ScreenID = sc.ScreenID " +
-                           "WHERE s.MovieID = (SELECT MovieID FROM Tickets WHERE TicketID = ?)";
-            PreparedStatement statement = conn.prepareStatement(query);
-            statement.setInt(1, ticketID);
-            ResultSet resultSet = statement.executeQuery();
-
-            scheduleTable.setModel(buildTableModel(resultSet));
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "상영 일정 조회 중 오류가 발생했습니다.");
-        }
-
-        JPanel buttonPanel = new JPanel();
-        JButton selectButton = new JButton("선택");
-        buttonPanel.add(selectButton);
-        changeScheduleFrame.add(buttonPanel, BorderLayout.SOUTH);
-
-        selectButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedRow = scheduleTable.getSelectedRow();
-                if (selectedRow != -1) {
-                    int newScreeningID = (int) scheduleTable.getValueAt(selectedRow, 0);
-                    updateScreeningSchedule(ticketID, newScreeningID);
-                    changeScheduleFrame.dispose();
-                } else {
-                    JOptionPane.showMessageDialog(null, "변경할 상영 일정을 선택해주세요.");
-                }
-            }
-        });
-
-        changeScheduleFrame.setVisible(true);
-    }
-
-    private static void updateScreeningSchedule(int ticketID, int newScreeningID) {
-        try (Connection conn = DriverManager.getConnection(URL, userID, userPW)) {
-            // 상영 일정을 업데이트하는 쿼리
-            String updateScheduleQuery = "UPDATE Tickets SET ScreeningID = ? WHERE TicketID = ?";
-            PreparedStatement updateScheduleStmt = conn.prepareStatement(updateScheduleQuery);
-            updateScheduleStmt.setInt(1, newScreeningID);
-            updateScheduleStmt.setInt(2, ticketID);
-            updateScheduleStmt.executeUpdate();
-
-            JOptionPane.showMessageDialog(null, "상영 일정이 변경되었습니다.");
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "상영 일정 변경 중 오류가 발생했습니다.");
-        }
-    }
+   
     private static void changeBooking(int ticketID) {
         JFrame changeBookingFrame = new JFrame("영화 변경");
         changeBookingFrame.setSize(800, 600);
@@ -670,33 +663,98 @@ public class UserLogin extends JFrame {
         buttonPanel.add(selectButton);
         changeBookingFrame.add(buttonPanel, BorderLayout.SOUTH);
 
-        selectButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedRow = movieTable.getSelectedRow();
-                if (selectedRow != -1) {
-                    int newScreeningID = (int) movieTable.getValueAt(selectedRow, 0);
-                    updateBooking(ticketID, newScreeningID);
-                    changeBookingFrame.dispose();
-                } else {
-                    JOptionPane.showMessageDialog(null, "변경할 상영 정보를 선택해주세요.");
-                }
+        selectButton.addActionListener(e -> {
+            int selectedRow = movieTable.getSelectedRow();
+            if (selectedRow != -1) {
+                int newScreeningID = (int) movieTable.getValueAt(selectedRow, 0);
+                int screenID = (int) movieTable.getValueAt(selectedRow, 4);
+                showSeatSelectionForChange(ticketID, newScreeningID, screenID, changeBookingFrame);
+            } else {
+                JOptionPane.showMessageDialog(null, "변경할 상영 정보를 선택해주세요.");
             }
         });
 
         changeBookingFrame.setVisible(true);
     }
 
-    private static void updateBooking(int ticketID, int newScreeningID) {
+    private static void showSeatSelectionForChange(int ticketID, int screeningID, int screenID, JFrame changeScheduleFrame) {
+        JFrame seatFrame = new JFrame("좌석 선택");
+        seatFrame.setSize(600, 400);
+        seatFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        try (Connection conn = DriverManager.getConnection(URL, userID, userPW)) {
+            // 상영관의 가로 및 세로 좌석 수를 가져오기 위한 쿼리
+            String screenSizeQuery = "SELECT ScreenRows, ScreenColumns FROM Screen WHERE ScreenID = ?";
+            PreparedStatement screenSizeStmt = conn.prepareStatement(screenSizeQuery);
+            screenSizeStmt.setInt(1, screenID);
+            ResultSet screenSizeResultSet = screenSizeStmt.executeQuery();
+
+            int rows = 0;
+            int cols = 0;
+            if (screenSizeResultSet.next()) {
+                rows = screenSizeResultSet.getInt("ScreenRows");
+                cols = screenSizeResultSet.getInt("ScreenColumns");
+            }
+
+            // 좌석 정보를 가져오기 위한 쿼리
+            String seatQuery = "SELECT SeatID, SeatRow, SeatColumn FROM Seats WHERE ScreenID = ?";
+            PreparedStatement seatStmt = conn.prepareStatement(seatQuery);
+            seatStmt.setInt(1, screenID);
+            ResultSet seatResultSet = seatStmt.executeQuery();
+
+            JPanel seatPanel = new JPanel(new GridLayout(rows, cols)); // 가로 x 세로 좌석 배치
+            while (seatResultSet.next()) {
+                int seatID = seatResultSet.getInt("SeatID");
+                int seatRow = seatResultSet.getInt("SeatRow");
+                int seatColumn = seatResultSet.getInt("SeatColumn");
+
+                JButton seatButton = new JButton(seatRow + "-" + seatColumn);
+
+                // 좌석의 예매 상태를 확인하기 위한 쿼리
+                String ticketQuery = "SELECT * FROM Tickets WHERE ScreeningID = ? AND SeatID = ?";
+                PreparedStatement ticketStmt = conn.prepareStatement(ticketQuery);
+                ticketStmt.setInt(1, screeningID);
+                ticketStmt.setInt(2, seatID);
+                ResultSet ticketResultSet = ticketStmt.executeQuery();
+
+                if (ticketResultSet.next()) {
+                    seatButton.setBackground(Color.RED); // 예매된 좌석은 빨간색으로 표시
+                    seatButton.setEnabled(false); // 예매된 좌석은 클릭 불가
+                } else {
+                    seatButton.setBackground(Color.GREEN); // 사용 가능한 좌석은 녹색으로 표시
+                    seatButton.setEnabled(true); // 사용 가능한 좌석은 클릭 가능
+
+                    // 좌석 선택 시 예매 변경 창으로 이동하는 기능 추가
+                    seatButton.addActionListener(e -> {
+                        updateBookingWithSeat(ticketID, screeningID, screenID, seatID, seatFrame, changeScheduleFrame);
+                    });
+                }
+
+                seatPanel.add(seatButton);
+            }
+
+            seatFrame.add(new JScrollPane(seatPanel));
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "좌석 조회 중 오류가 발생했습니다.");
+        }
+
+        seatFrame.setVisible(true);
+    }
+
+    private static void updateBookingWithSeat(int ticketID, int newScreeningID, int screenID, int newSeatID, JFrame seatFrame, JFrame changeBookingFrame) {
         try (Connection conn = DriverManager.getConnection(URL, userID, userPW)) {
             // 예매 정보를 업데이트하는 쿼리
-            String updateBookingQuery = "UPDATE Tickets SET ScreeningID = ? WHERE TicketID = ?";
+            String updateBookingQuery = "UPDATE Tickets SET ScreeningID = ?, SeatID = ? WHERE TicketID = ?";
             PreparedStatement updateBookingStmt = conn.prepareStatement(updateBookingQuery);
             updateBookingStmt.setInt(1, newScreeningID);
-            updateBookingStmt.setInt(2, ticketID);
+            updateBookingStmt.setInt(2, newSeatID);
+            updateBookingStmt.setInt(3, ticketID);
             updateBookingStmt.executeUpdate();
 
             JOptionPane.showMessageDialog(null, "예매가 변경되었습니다.");
+            seatFrame.dispose();
+            changeBookingFrame.dispose();
         } catch (SQLException ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(null, "예매 변경 중 오류가 발생했습니다.");
