@@ -1,11 +1,12 @@
-package dbProject.UI;
+package UI;
 
-import dbProject.UI.*;
 import java.sql.*;
 import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
+import UI.*;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;

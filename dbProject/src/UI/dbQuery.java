@@ -1,4 +1,4 @@
-package dbProject.UI;
+package UI;
 
 public class dbQuery {
     String[] dropTables = {"DROP TABLE IF EXISTS Tickets;",
